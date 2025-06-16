@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 app.use(bodyParser.json());
 // Serve static files from the public directory
-app.use(express.static('src/public'));
+app.use(express.static('public'));
 const server = createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
 const clients = new Map<string, { socket: WebSocket; subscriptions: Set<number> }>();
