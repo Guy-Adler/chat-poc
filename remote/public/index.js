@@ -23,7 +23,7 @@ ws.onmessage = (event) => {
       break;
     case 'update':
       if (data.chatId === currentChatId) {
-        appendMessage(data.messages);
+        data.messages.forEach((message) => appendMessage(message));
       }
       break;
   }

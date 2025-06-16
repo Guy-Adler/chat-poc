@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 app.use(express.static('public'));
 const server = createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
-const clients = new Map<string, { socket: WebSocket; subscriptions: Set<number> }>();
+const clients = new Map<string, { socket: WebSocket; subscriptions: Set<number> | true }>();
 
 app.get('/chats', async (req, res) => {
   try {
@@ -64,11 +64,23 @@ app.post('/chat/:id', async (req, res) => {
   });
 
   clients.forEach(({ socket, subscriptions }) => {
-    if (subscriptions.has(chatId)) {
-      socket.send(JSON.stringify({ type: 'update', chatId, messages: message }));
+    if (subscriptions === true || subscriptions.has(chatId)) {
+      socket.send(
+        JSON.stringify({
+          type: 'update',
+          chatId: message.chat.id,
+          messages: [
+            {
+              id: message.id,
+              createdAt: message.createdAt,
+              content: message.content,
+            },
+          ],
+        })
+      );
     }
   });
-  res.status(201).json(message);
+
   return;
 });
 
@@ -117,7 +129,10 @@ wss.on('connection', (socket) => {
       switch (message.type) {
         case 'sub':
           if (message.id) {
-            clients.get(id)?.subscriptions?.add?.(message.id);
+            const subscriptions = clients.get(id)?.subscriptions;
+            if (subscriptions && subscriptions !== true) {
+              subscriptions.add(message.id);
+            }
             try {
               const chat = await dataSource
                 .getRepository(Chat)
@@ -131,10 +146,17 @@ wss.on('connection', (socket) => {
               console.error(e);
             }
             return;
+          } else {
+            clients.set(id, { socket, subscriptions: true });
+            // TODO load all
+            return;
           }
         case 'unsub':
           if (message.id) {
-            clients.get(id)?.subscriptions?.delete?.(message.id);
+            const subscriptions = clients.get(id)?.subscriptions;
+            if (subscriptions && subscriptions !== true) {
+              subscriptions.delete(message.id);
+            }
             return;
           }
         default:
