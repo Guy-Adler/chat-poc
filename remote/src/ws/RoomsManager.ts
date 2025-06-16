@@ -32,9 +32,9 @@ export class RoomsManager {
 
     const room = this.rooms.get(id);
     if (room) {
-      room.unsubscribe();
       this.deleteListeners.forEach((listener) => listener(room));
       this.rooms.delete(id);
+      room.destroy();
     }
   }
 

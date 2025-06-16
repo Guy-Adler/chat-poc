@@ -35,4 +35,10 @@ export class ClientsManager {
     });
     this.clients.clear();
   }
+
+  static broadcast(message: any) {
+    this.clients.forEach((client) => {
+      client.send(message);
+    });
+  }
 }

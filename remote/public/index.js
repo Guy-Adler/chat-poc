@@ -26,6 +26,16 @@ ws.onmessage = (event) => {
         data.messages.forEach((message) => appendMessage(message));
       }
       break;
+    case 'delete':
+      if (data.chatId === currentChatId) {
+        currentChatId = null;
+        messagesContainer.innerHTML = '<p class="no-messages">Select a chat to continue</p>';
+      }
+      loadChats();
+      break;
+    case 'newChat':
+      loadChats();
+      break;
   }
 };
 
