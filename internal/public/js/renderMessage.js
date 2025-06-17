@@ -1,68 +1,5 @@
 import { messagesContainer } from './globals.js';
 
-
-/**
- * Start editing a message
- * 
- * @param {HTMLDivElement} messageElement 
- * @param {number} messageId 
- */
-function startEditing(messageElement, messageId) {
-  const contentElement = messageElement.querySelector('.message-content');
-  const currentContent = contentElement.textContent;
-
-  const editForm = document.createElement('form');
-  editForm.classList.add('edit-form');
-
-  const editInput = document.createElement('input');
-  editInput.type = 'text';
-  editInput.value = currentContent;
-  editInput.classList.add('edit-input');
-
-  const saveButton = document.createElement('button');
-  saveButton.type = 'submit';
-  saveButton.textContent = 'Save';
-  saveButton.classList.add('save-edit-btn');
-
-  const cancelButton = document.createElement('button');
-  cancelButton.type = 'button';
-  cancelButton.textContent = 'Cancel';
-  cancelButton.classList.add('cancel-edit-btn');
-  cancelButton.onclick = () => {
-    messageElement.replaceChild(contentElement, editForm);
-  };
-
-  editForm.appendChild(editInput);
-  editForm.appendChild(saveButton);
-  editForm.appendChild(cancelButton);
-
-  editForm.onsubmit = async (event) => {
-    event.preventDefault();
-    const newContent = editInput.value.trim();
-
-    messageElement.replaceChild(contentElement, editForm);
-
-    try {
-      const response = await fetch(`/chat/${currentChatId}/message/${messageId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: newContent }),
-      });
-
-      if (!response.ok) {
-        console.error('Failed to update message');
-      }
-    } catch (error) {
-      console.error('Failed to update message:', error);
-    }
-  };
-
-  messageElement.replaceChild(editForm, contentElement);
-  editInput.focus();
-}
-
 /**
  * @param {{
  *  id: number,
@@ -106,14 +43,8 @@ export function appendMessage(message) {
     timestampElement.textContent += ` (edited ${updatedAt.toLocaleString()})`;
   }
 
-  const editButton = document.createElement('button');
-  editButton.classList.add('edit-message-btn');
-  editButton.innerHTML = '✎';
-  editButton.onclick = () => startEditing(messageElement, message.id);
-
   messageElement.appendChild(contentElement);
   messageElement.appendChild(timestampElement);
-  messageElement.appendChild(editButton);
   messagesContainer.appendChild(messageElement);
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
