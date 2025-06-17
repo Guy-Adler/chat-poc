@@ -10,7 +10,7 @@ export const dataSource = new DataSource({
   password: process.env.PG_PASSWORD,
   database: process.env.PG_DATABASE,
   schema: 'remote',
-  applicationName: 'remote-backend',
+  applicationName: 'internal-backend',
   entities: [Chat, ChatMessage],
   synchronize: true,
   ssl: true,

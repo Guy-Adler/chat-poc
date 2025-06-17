@@ -14,4 +14,7 @@ export class ChatMessage {
 
   @Column()
   createdAt!: Date;
+
+  @Column({ nullable: true })
+  updatedAt?: Date;
 }

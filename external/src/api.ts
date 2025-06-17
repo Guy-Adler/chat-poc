@@ -68,11 +68,61 @@ app.post('/chat/:id', async (req, res) => {
           id: message.id,
           createdAt: message.createdAt,
           content: message.content,
+          updatedAt: message.updatedAt,
         },
       ],
     })
   );
+
+  res.status(201).send();
   return;
+});
+
+app.put('/chat/:chatId/message/:messageId', async (req, res) => {
+  const chatId = Number.parseInt(req.params.chatId);
+  const messageId = Number.parseInt(req.params.messageId);
+  const { content } = req.body;
+
+  if (!Number.isInteger(chatId) || !Number.isInteger(messageId) || typeof content !== 'string') {
+    res.status(400).send();
+    return;
+  }
+
+  try {
+    const message = await dataSource.getRepository(ChatMessage).findOneByOrFail({
+      id: messageId,
+      chat: { id: chatId },
+    });
+
+    message.content = content;
+    message.updatedAt = new Date();
+    await dataSource.getRepository(ChatMessage).save(message);
+
+    RoomsManager.getByRoomId(chatId)?.send(
+      JSON.stringify({
+        type: 'update',
+        chatId,
+        messages: [
+          {
+            id: message.id,
+            content: message.content,
+            updatedAt: message.updatedAt,
+          },
+        ],
+      })
+    );
+
+    res.status(200).json(message);
+    return;
+  } catch (err) {
+    if (err instanceof EntityNotFoundError) {
+      res.status(404).send();
+      return;
+    }
+    console.error(err);
+    res.status(500).send();
+    return;
+  }
 });
 
 app.delete('/chat/:id', async (req, res) => {

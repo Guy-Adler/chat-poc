@@ -1,13 +1,7 @@
-let currentChatId = null;
+import { chatList, messageForm, messageInput, messagesContainer, newChatBtn } from './js/globals.js';
+import { appendMessage } from './js/renderMessage.js';
+
 const ws = new WebSocket(`ws://${window.location.host}/ws`);
-
-// DOM Elements
-const chatList = document.getElementById('chatList');
-const messagesContainer = document.getElementById('messages');
-const messageForm = document.getElementById('messageForm');
-const messageInput = document.getElementById('messageInput');
-const newChatBtn = document.getElementById('newChatBtn');
-
 // WebSocket event handlers
 ws.onopen = () => {
   console.log('Connected to WebSocket');
@@ -99,17 +93,10 @@ function selectChat(chatId) {
 // Display messages
 function displayMessages(messages) {
   messagesContainer.innerHTML = '';
-  messages.forEach(message => appendMessage(message));
-}
-
-// Append a single message
-function appendMessage(message) {
-  const messageElement = document.createElement('div');
-  messageElement.classList.add('message');
-  messageElement.classList.add('sent');
-  messageElement.textContent = message.content;
-  messagesContainer.appendChild(messageElement);
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  messages
+    .slice()
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    .forEach(message => appendMessage(message));
 }
 
 // Send a message
