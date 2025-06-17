@@ -4,10 +4,26 @@
   box-sizing: border-box;
 }
 
+.ribbon {
+  position: fixed;
+  top: 32px;
+  right: -60px;
+  width: 220px;
+  background-color: #673ab7;
+  color: white;
+  padding: 10px 0;
+  transform: rotate(45deg);
+  font-size: 1rem;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  text-align: center;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.6;
-  background-color: #f5f5f5;
+  background-color: #f8f5ff;
 }
 
 .container {
@@ -60,13 +76,13 @@ body {
 }
 
 .chat-item.active {
-  background-color: #e3f2fd;
+  background-color: #ede7f6;
 }
 
 #newChatBtn {
   margin-top: 10px;
   padding: 10px;
-  background-color: #2196f3;
+  background-color: #673ab7;
   color: white;
   border: none;
   border-radius: 6px;
@@ -75,7 +91,7 @@ body {
 }
 
 #newChatBtn:hover {
-  background-color: #1976d2;
+  background-color: #5e35b1;
 }
 
 .message-container {
@@ -159,12 +175,12 @@ body {
 }
 
 .save-edit-btn {
-  background-color: #4caf50;
+  background-color: #7b1fa2;
   color: white;
 }
 
 .save-edit-btn:hover {
-  background-color: #388e3c;
+  background-color: #6a1b9a;
 }
 
 .cancel-edit-btn {
@@ -177,12 +193,12 @@ body {
 }
 
 .message.sent {
-  background-color: #e3f2fd;
+  background-color: #ede7f6;
   align-self: flex-end;
 }
 
 .message.received {
-  background-color: #f5f5f5;
+  background-color: #f3e5f5;
   align-self: flex-start;
 }
 
@@ -202,7 +218,7 @@ body {
 
 .message-form button {
   padding: 10px 20px;
-  background-color: #2196f3;
+  background-color: #673ab7;
   color: white;
   border: none;
   border-radius: 6px;
@@ -211,7 +227,7 @@ body {
 }
 
 .message-form button:hover {
-  background-color: #1976d2;
+  background-color: #5e35b1;
 }
 
 /* No chat selected */
@@ -246,22 +262,6 @@ body {
 }
 
 .delete-chat-btn:hover {
-  background-color: #ffebee;
-  color: #d32f2f;
-}
-
-.ribbon {
-  position: fixed;
-  top: 32px;
-  right: -60px;
-  width: 220px;
-  background-color: #2196f3;
-  color: white;
-  padding: 10px 0;
-  transform: rotate(45deg);
-  font-size: 1rem;
-  font-weight: 500;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  text-align: center;
+  background-color: #f3e5f5;
+  color: #7b1fa2;
 }
