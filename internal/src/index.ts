@@ -1,11 +1,16 @@
 import 'dotenv/config';
 import { dataSource } from './db/dataSource';
 import { server } from './api';
+import { shutdownKafka, startKafka } from './kafkaConsumer';
+import './socket';
 
 const PORT = process.env.PORT || 4000;
 
 process.on('SIGTERM', async () => {
   console.log('Shutting down gracefully...');
+
+  // Stop Kafka consumer
+  shutdownKafka();
 
   // Close HTTP server
   server.closeAllConnections();
@@ -28,6 +33,7 @@ process.on('SIGTERM', async () => {
 
 server.listen(PORT, async () => {
   await dataSource.initialize();
+  await startKafka();
 
   console.log(`Listening on port ${PORT}`);
 });

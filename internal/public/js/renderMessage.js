@@ -1,5 +1,16 @@
 import { messagesContainer } from './globals.js';
 
+
+// Display messages
+export function displayMessages({ messages }) {
+  messagesContainer.innerHTML = '';
+  messages
+    .slice()
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    .forEach(message => appendMessage(message));
+}
+
+
 /**
  * @param {{
  *  id: number,

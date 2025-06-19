@@ -7,7 +7,7 @@ The project will consist of the following microservices, enabling the flow we wa
 - [x] `external`: Simulates the external service which we do not control (front + backend)
 - [ ] `synchronizer`: Imitates the external service's client, reading messages and saving them to Kafka.
 - [ ] `writer`: Writes messages from Kafka to a database
-- [ ] `internal`: Imitates our system (front + back)
+- [x] `internal`: Imitates our system (front + back)
 
 ## Requirements
 

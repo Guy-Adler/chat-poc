@@ -1,5 +1,6 @@
 import { chatList, messagesContainer } from './js/globals.js';
 import { appendMessage } from './js/renderMessage.js';
+import { socket } from './js/socket.js';
 
 // Load available chats
 async function loadChats() {
@@ -32,7 +33,7 @@ document.addEventListener('DOMContentLoaded', loadChats);
 // Select a chat
 function selectChat(chatId) {
   if (currentChatId !== null) {
-    ws.send(JSON.stringify({ type: 'unsub', id: currentChatId }));
+    socket.emit('unsub', { id: currentChatId })
   }
 
   currentChatId = chatId;
@@ -44,14 +45,5 @@ function selectChat(chatId) {
   event.target.classList.add('active');
 
   // Subscribe to chat
-  ws.send(JSON.stringify({ type: 'sub', id: chatId }));
-}
-
-// Display messages
-function displayMessages(messages) {
-  messagesContainer.innerHTML = '';
-  messages
-    .slice()
-    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-    .forEach(message => appendMessage(message));
+  socket.emit('sub', { id: currentChatId })
 }
