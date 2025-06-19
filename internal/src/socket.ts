@@ -2,6 +2,7 @@ import { Server } from 'socket.io';
 import { server } from './api';
 import { dataSource } from './db/dataSource';
 import { Chat } from './db/Chat.entity';
+import { getChatMessages } from './getChatMessages';
 
 const io = new Server(server);
 
@@ -9,19 +10,24 @@ io.on('connection', (socket) => {
   console.log('A user connected');
 
   socket.on('sub', async ({ id }) => {
+    //! Client needs to be able to handle `update` before `load` (save in memory until load or something.)
     socket.join(`chat:${id}`);
+    const [chat, chatMessages] = await Promise.all([
+      dataSource.getRepository(Chat).findOne({ where: { id }, relations: { messages: false } }),
+      getChatMessages(id),
+    ]);
 
-    const chatMessages = await dataSource
-      .getRepository(Chat)
-      .findOne({ relations: { messages: true }, where: { id } });
-    if (chatMessages) {
-      socket.emit('load', {
-        chatId: chatMessages.id,
-        isDeleted: chatMessages.isDeleted,
-        messages: chatMessages.messages,
-        replicationTimestamp: chatMessages.replicationTimestamp,
-      });
+    if (!chat) {
+      console.error('Could not find chat');
+      return;
     }
+
+    socket.emit('load', {
+      chatId: id,
+      messages: chatMessages,
+      isDeleted: chat.isDeleted,
+      replicationTimestamp: chat.replicationTimestamp,
+    });
   });
 
   socket.on('unsub', ({ id }) => {

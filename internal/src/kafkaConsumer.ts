@@ -1,5 +1,7 @@
 import { Kafka } from 'kafkajs';
 import { sendUpdate } from './socket';
+import type { KafkaMessage } from './types';
+import { updateMessageInCache } from './redis/updateCache';
 
 const kafka = new Kafka({
   brokers: (process.env.KAFKA_BROKERS ?? '').split(','),
@@ -18,14 +20,9 @@ export async function startKafka() {
       if (!message.value) return;
       console.log(`Received message (${message.value.toString()})`);
       try {
-        const kafkaMessage: {
-          id: number;
-          chatId: number;
-          content: string;
-          isDeleted?: boolean;
-          createdAt?: string;
-          updatedAt: string | null;
-        } = JSON.parse(message.value.toString());
+        const kafkaMessage: KafkaMessage = JSON.parse(message.value.toString());
+
+        await updateMessageInCache(kafkaMessage);
 
         sendUpdate(kafkaMessage.chatId, kafkaMessage);
       } catch {
