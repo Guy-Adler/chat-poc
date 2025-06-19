@@ -11,81 +11,92 @@ const producer = kafka.producer();
 let closing = false;
 let websocket: WebSocket;
 
+/**
+ * Creates and manages the WebSocket connection to the chat server.
+ * Handles incoming messages and forwards them to Kafka.
+ * @returns {WebSocket} The created WebSocket instance.
+ */
 function createWebSocket() {
   const ws = new WebSocket(process.env.WS_HOST!, {});
 
   ws.on('open', () => {
-    console.log('Connected to websocket');
-
+    console.log('[synchronizer] Connected to websocket');
     ws.send(JSON.stringify({ type: 'sub' }));
   });
 
   ws.on('close', () => {
     if (!closing) {
-      console.log('Disconnected from websocket, shutting down');
+      console.log('[synchronizer] Disconnected from websocket, shutting down');
       process.kill(process.pid, 'SIGTERM');
     }
   });
 
   ws.on('message', async (data) => {
-    const message = JSON.parse(data.toString());
-
-    if (!['load', 'update'].includes(message.type)) {
-      console.log('Received unknown message type', message.type);
-      return;
+    try {
+      const message = JSON.parse(data.toString());
+      if (!['load', 'update'].includes(message.type)) {
+        console.log('[synchronizer] Received unknown message type', message.type);
+        return;
+      }
+      const chatId = message.chatId;
+      const messagesToSend: {
+        id: number;
+        chatId: number;
+        content: string;
+        isDeleted?: boolean;
+        createdAt?: string;
+        updatedAt: string | null;
+      }[] = (message.messages as any[]).map((m: any) => ({
+        id: m.id,
+        createdAt: m.createdAt,
+        content: m.content,
+        updatedAt: m.updatedAt,
+        chatId,
+        isDeleted: false,
+      }));
+      console.log(
+        `[synchronizer] Forwarding ${messagesToSend.length} messages for chatId=${chatId} to Kafka`
+      );
+      await producer.send({
+        topic: process.env.KAFKA_TOPIC!,
+        messages: messagesToSend.map((m) => ({
+          value: JSON.stringify(m),
+          key: m.chatId.toString(),
+        })),
+      });
+    } catch (err) {
+      console.error('[synchronizer] Error handling websocket message:', err);
     }
-
-    const chatId = message.chatId;
-
-    const messagesToSend: {
-      id: number;
-      chatId: number;
-      content: string;
-      isDeleted?: boolean;
-      createdAt?: string;
-      updatedAt: string | null;
-    }[] = (message.messages as any[]).map((m: any) => ({
-      id: m.id,
-      createdAt: m.createdAt,
-      content: m.content,
-      updatedAt: m.updatedAt,
-      chatId,
-      isDeleted: false,
-    }));
-
-    await producer.send({
-      topic: process.env.KAFKA_TOPIC!,
-      messages: messagesToSend.map((m) => ({ value: JSON.stringify(m), key: m.chatId.toString() })),
-    });
   });
 
   return ws;
 }
 
 process.on('SIGTERM', async () => {
-  console.log('Shutting down gracefully...');
-
+  console.log('[synchronizer] Shutting down gracefully...');
   if (websocket && websocket.readyState === WebSocket.OPEN) {
-    console.log('Closing websocket connection...');
+    console.log('[synchronizer] Closing websocket connection...');
     await new Promise((resolve) => {
       closing = true;
       websocket.once('close', resolve);
       websocket.close();
     });
-    console.log('Websocket connection closed.');
+    console.log('[synchronizer] Websocket connection closed.');
   }
-
   // Stop Kafka producer
   await producer.disconnect();
-
-  console.log('Shutdown complete');
+  console.log('[synchronizer] Shutdown complete');
   process.exit(0);
 });
 
+/**
+ * Main entry point for the synchronizer service.
+ * Connects the Kafka producer and establishes the websocket connection.
+ */
 async function main() {
   await producer.connect();
   websocket = createWebSocket();
-  console.log('Waiting for messages from Kafka');
+  console.log('[synchronizer] Waiting for messages from Kafka');
 }
 
 main();

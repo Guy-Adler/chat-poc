@@ -8,7 +8,12 @@ const UPDATE_BY_TIMESTAMP_SCRIPT = readFileSync(
   'utf-8'
 );
 
-export async function updateMessageInCache(message: MinimumKafkaMessage) {
+/**
+ * Updates a message in the Redis cache using a Lua script.
+ * @param {MinimumKafkaMessage} message - The message to update in cache
+ * @returns {Promise<RedisHashMessage>} The updated message from cache
+ */
+export async function updateMessageInCache(message: MinimumKafkaMessage): Promise<RedisHashMessage> {
   const args = [
     message.id.toString(), // Message ID
     message.updatedAt ?? '', // Update timestamp
@@ -19,6 +24,9 @@ export async function updateMessageInCache(message: MinimumKafkaMessage) {
     args.push(field, (value ?? '').toString());
   }
 
+  console.log(
+    `[writer/redis/updateCache] Updating cache for message id=${message.id} chatId=${message.chatId}`
+  );
   const rawResult = (await pool.eval(UPDATE_BY_TIMESTAMP_SCRIPT, {
     keys: [getKeyByMessage(message.id, message.chatId), getChatIndexKey(message.chatId)],
     arguments: args,
@@ -29,5 +37,9 @@ export async function updateMessageInCache(message: MinimumKafkaMessage) {
     result[rawResult[i]] = rawResult[i + 1];
   }
 
+  console.log(
+    `[writer/redis/updateCache] Cache update result for message id=${message.id}:`,
+    result
+  );
   return result as unknown as RedisHashMessage;
 }

@@ -13,34 +13,51 @@ app.use(bodyParser.json());
 // Serve static files from the public directory
 app.use(express.static('public'));
 
+/**
+ * GET /chats
+ * Returns a list of all chat IDs.
+ */
 app.get('/chats', async (req, res) => {
   try {
     const chats = await dataSource.getRepository(Chat).find({ relations: { messages: false } });
+    console.log(`[api] Fetched ${chats.length} chats`);
     res.status(200).json(chats.map(({ id }) => id));
     return;
-  } catch {
+  } catch (err) {
+    console.error('[api] Error fetching chats:', err);
     res.status(500).send();
     return;
   }
 });
 
+/**
+ * POST /chats
+ * Creates a new chat and returns its details.
+ */
 app.post('/chats', async (req, res) => {
   try {
     const newChat = await dataSource.getRepository(Chat).save({});
     RoomsManager.create(newChat.id);
+    console.log(`[api] Created new chat with id=${newChat.id}`);
     res.status(201).json(newChat);
     return;
-  } catch {
+  } catch (err) {
+    console.error('[api] Error creating chat:', err);
     res.status(500).send();
     return;
   }
 });
 
+/**
+ * POST /chat/:id
+ * Adds a new message to a chat.
+ */
 app.post('/chat/:id', async (req, res) => {
   const chatId = Number.parseInt(req.params.id);
   const { content } = req.body;
 
   if (!Number.isInteger(chatId) || typeof content !== 'string') {
+    console.warn(`[api] Invalid chatId or content for POST /chat/:id`);
     res.status(400).send();
     return;
   }
@@ -49,6 +66,7 @@ app.post('/chat/:id', async (req, res) => {
   try {
     chat = await dataSource.getRepository(Chat).findOneByOrFail({ id: chatId });
   } catch {
+    console.warn(`[api] Chat not found for id=${chatId}`);
     res.status(404).send();
     return;
   }
@@ -73,17 +91,24 @@ app.post('/chat/:id', async (req, res) => {
       ],
     })
   );
-
+  console.log(`[api] Added message id=${message.id} to chatId=${chatId}`);
   res.status(201).send();
   return;
 });
 
+/**
+ * PUT /chat/:chatId/message/:messageId
+ * Updates the content of a message in a chat.
+ */
 app.put('/chat/:chatId/message/:messageId', async (req, res) => {
   const chatId = Number.parseInt(req.params.chatId);
   const messageId = Number.parseInt(req.params.messageId);
   const { content } = req.body;
 
   if (!Number.isInteger(chatId) || !Number.isInteger(messageId) || typeof content !== 'string') {
+    console.warn(
+      `[api] Invalid chatId, messageId, or content for PUT /chat/:chatId/message/:messageId`
+    );
     res.status(400).send();
     return;
   }
@@ -111,35 +136,41 @@ app.put('/chat/:chatId/message/:messageId', async (req, res) => {
         ],
       })
     );
-
+    console.log(`[api] Updated message id=${message.id} in chatId=${chatId}`);
     res.status(200).json(message);
     return;
   } catch (err) {
     if (err instanceof EntityNotFoundError) {
+      console.warn(`[api] Message or chat not found for chatId=${chatId}, messageId=${messageId}`);
       res.status(404).send();
       return;
     }
-    console.error(err);
+    console.error('[api] Error updating message:', err);
     res.status(500).send();
     return;
   }
 });
 
+/**
+ * DELETE /chat/:id
+ * Deletes a chat by ID.
+ */
 app.delete('/chat/:id', async (req, res) => {
   const chatId = Number.parseInt(req.params.id);
-
   try {
     const chat = await dataSource.getRepository(Chat).findOneByOrFail({ id: chatId });
     await dataSource.getRepository(Chat).remove(chat);
     RoomsManager.delete(chatId);
+    console.log(`[api] Deleted chat id=${chatId}`);
     res.status(204).send();
     return;
   } catch (err) {
     if (err instanceof EntityNotFoundError) {
+      console.warn(`[api] Chat not found for DELETE id=${chatId}`);
       res.status(404).send();
       return;
     }
-    console.error(err);
+    console.error('[api] Error deleting chat:', err);
     res.status(500).send();
     return;
   }

@@ -11,5 +11,7 @@ export type KafkaMessage = {
   updatedAt: string | null;
 };
 
-export type MinimumKafkaMessage = PartialExcept<KafkaMessage, 'id' | 'chatId' | 'updatedAt'>;
+export type MinimumKafkaMessage = Prettify<
+  PartialExcept<KafkaMessage, 'id' | 'chatId' | 'updatedAt'>
+>;
 export type RedisHashMessage = Prettify<PartialField<KafkaMessage, 'updatedAt'>>;

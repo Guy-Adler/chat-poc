@@ -23,3 +23,21 @@ export type DeleteKafkaMessage = {
 };
 
 export type KafkaMessage = CreateKafkaMessage | UpdateKafkaMessage | DeleteKafkaMessage;
+
+export type MinimumKafkaMessage = {
+  id: number;
+  chatId: number;
+  content?: string | undefined;
+  isDeleted?: boolean | undefined;
+  createdAt?: string | undefined;
+  updatedAt: string | null;
+};
+
+export type RedisHashMessage = {
+  id: number;
+  chatId: number;
+  content: string;
+  isDeleted?: boolean | undefined;
+  createdAt?: string | undefined;
+  updatedAt?: string | null | undefined;
+};
