@@ -10,7 +10,7 @@ process.on('SIGTERM', async () => {
   console.log('Shutting down gracefully...');
 
   // Stop Kafka consumer
-  shutdownKafka();
+  await shutdownKafka();
 
   // Close HTTP server
   server.closeAllConnections();
