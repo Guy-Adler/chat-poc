@@ -4,7 +4,7 @@ import { getChatIndexKey, getKeyByMessage, pool } from './connection';
 import { join } from 'path';
 
 const UPDATE_BY_TIMESTAMP_SCRIPT = readFileSync(
-  join(__dirname, './updateByTimestamp.lua'),
+  join(__dirname, '../../redisScripts/updateByTimestamp.lua'),
   'utf-8'
 );
 

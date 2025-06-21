@@ -1,0 +1,8 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: kafka-b-connection
+  namespace: default
+data:
+  KAFKA_BROKERS: kafka-0.managed-b.svc.cluster.local:9092,kafka-1.managed-b.svc.cluster.local:9092,kafka-2.managed-b.svc.cluster.local:9092
+  KAFKA_TOPIC: chat-messages

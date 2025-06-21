@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: synchronizer
+  namespace: default
+  labels:
+    app: synchronizer
+spec:
+  selector:
+    matchLabels:
+      app: synchronizer
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: synchronizer
+    spec:
+      containers:
+        - name: synchronizer
+          image: localhost:32000/chat-synchronizer:latest
+          resources:
+            requests:
+              cpu: 200m
+              memory: 200Mi
+            limits:
+              cpu: 400m
+              memory: 300Mi
+          envFrom:
+            - configMapRef:
+                name: kafka-a-connection
+          env:
+            - name: WS_HOST
+              value: "ws://external-app:3000/ws"
+      restartPolicy: Always

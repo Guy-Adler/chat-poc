@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-app
+  namespace: default
+  labels:
+    app: external-app
+spec:
+  selector:
+    matchLabels:
+      app: external-app
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: external-app
+    spec:
+      containers:
+        - name: external-app
+          image: localhost:32000/chat-external:latest
+          resources:
+            requests:
+              cpu: 200m
+              memory: 200Mi
+            limits:
+              cpu: 400m
+              memory: 300Mi
+          envFrom:
+            - configMapRef:
+                name: db-connection
+          env:
+            - name: PORT
+              value: "3000"
+          ports:
+            - containerPort: 3000
+              name: external
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-app
+  namespace: default
+spec:
+  selector:
+    app: external-app
+  type: ClusterIP
+  ports:
+    - name: external-app
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-app-nodeport
+  namespace: default
+spec:
+  selector:
+    app: external-app
+  type: NodePort
+  ports:
+    - name: external-app
+      protocol: TCP
+      port: 3000
+      nodePort: 30001

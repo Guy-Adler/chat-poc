@@ -44,8 +44,14 @@ spec:
             - name: KAFKA_CLUSTERS_0_NAME
               value: managed-a
             - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
-              value: kafka-0.managed-a.svc.cluster.local:9092
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-a-connection
+                  key: KAFKA_BROKERS
             - name: KAFKA_CLUSTERS_1_NAME
               value: managed-b
             - name: KAFKA_CLUSTERS_1_BOOTSTRAPSERVERS
-              value: kafka-0.managed-b.svc.cluster.local:9092
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-b-connection
+                  key: KAFKA_BROKERS

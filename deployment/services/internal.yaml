@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: internal-app
+  namespace: default
+  labels:
+    app: internal-app
+spec:
+  selector:
+    matchLabels:
+      app: internal-app
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: internal-app
+    spec:
+      containers:
+        - name: internal-app
+          image: localhost:32000/chat-internal:latest
+          resources:
+            requests:
+              cpu: 200m
+              memory: 200Mi
+            limits:
+              cpu: 400m
+              memory: 300Mi
+          envFrom:
+            - configMapRef:
+                name: db-connection
+            - configMapRef:
+                name: kafka-a-connection
+            - configMapRef:
+                name: redis-connection
+          env:
+            - name: PORT
+              value: "3000"
+          ports:
+            - containerPort: 3000
+              name: external
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: internal-app
+  namespace: default
+spec:
+  selector:
+    app: internal-app
+  type: ClusterIP
+  ports:
+    - name: internal-app
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: internal-app-nodeport
+  namespace: default
+spec:
+  selector:
+    app: internal-app
+  type: NodePort
+  ports:
+    - name: internal-app
+      protocol: TCP
+      port: 3000
+      nodePort: 30002

@@ -1,0 +1,10 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: redis-connection
+  namespace: default
+data:
+  REDIS_USERNAME: <redis username>
+  REDIS_PASSWORD: <redis password>
+  REDIS_HOST: <redis host>
+  REDIS_PORT: <redis port>
