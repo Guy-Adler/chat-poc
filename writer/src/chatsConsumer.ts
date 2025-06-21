@@ -1,27 +1,29 @@
 import { Kafka } from 'kafkajs';
 import type { KafkaMessage } from './types';
-import { saveMessage } from './saveMessage';
+import { saveChat } from './saveChat';
 
 const kafka = new Kafka({
   brokers: (process.env.KAFKA_BROKERS ?? '').split(','),
-  clientId: 'writer-1',
+  clientId: 'chats-writer-1',
 });
 const consumer = kafka.consumer({
-  groupId: `writer-${Date.now()}`,
+  groupId: `chats-writer`,
 });
 
-export async function startKafka() {
+export async function startChatsKafka() {
   await consumer.connect();
-  await consumer.subscribe({ topic: process.env.KAFKA_TOPIC!, fromBeginning: true });
+  await consumer.subscribe({ topic: process.env.KAFKA_CHAT_TOPIC!, fromBeginning: true });
 
   await consumer.run({
     async eachMessage({ message }) {
       if (!message.value) return;
       console.log(`Received message (${message.value.toString()})`);
       try {
-        const kafkaMessage: KafkaMessage = JSON.parse(message.value.toString());
+        const kafkaMessage: { type: 'delete' | 'new'; id: string } = JSON.parse(
+          message.value.toString()
+        );
 
-        await saveMessage(kafkaMessage);
+        await saveChat(kafkaMessage);
       } catch {
         console.error('Failed to handle message!');
       }
@@ -29,6 +31,6 @@ export async function startKafka() {
   });
 }
 
-export async function shutdownKafka() {
+export async function shutdownChatsKafka() {
   await consumer.disconnect();
 }

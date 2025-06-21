@@ -1,12 +1,14 @@
 import 'dotenv/config';
 import { dataSource } from './db/dataSource';
 import { shutdownKafka, startKafka } from './kafkaConsumer';
+import { shutdownChatsKafka, startChatsKafka } from './chatsConsumer';
 
 process.on('SIGTERM', async () => {
   console.log('Shutting down gracefully...');
 
   // Stop Kafka consumer
   await shutdownKafka();
+  await shutdownChatsKafka();
 
   // Close database connection
   if (dataSource.isInitialized) {
@@ -21,6 +23,7 @@ process.on('SIGTERM', async () => {
 async function main() {
   await dataSource.initialize();
   await startKafka();
+  await startChatsKafka();
 
   console.log(`Ready for Kafka messages`);
 }

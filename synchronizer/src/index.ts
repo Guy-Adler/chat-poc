@@ -8,6 +8,22 @@ const kafka = new Kafka({
 });
 const producer = kafka.producer();
 
+async function handleChat(message: any) {
+  const { chatId } = message;
+
+  await producer.send({
+    topic: process.env.KAFKA_CHAT_TOPIC!,
+    messages: [
+      {
+        value: JSON.stringify({
+          type: message.type === 'delete' ? 'delete' : 'new',
+          id: chatId,
+        }),
+      },
+    ],
+  });
+}
+
 let closing = false;
 let websocket: WebSocket;
 
@@ -34,6 +50,12 @@ function createWebSocket() {
   ws.on('message', async (data) => {
     try {
       const message = JSON.parse(data.toString());
+
+      if (['newChat', 'delete'].includes(message.type)) {
+        await handleChat(message);
+        return;
+      }
+
       if (!['load', 'update'].includes(message.type)) {
         console.log('[synchronizer] Received unknown message type', message.type);
         return;
