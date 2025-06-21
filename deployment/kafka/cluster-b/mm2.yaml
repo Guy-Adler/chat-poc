@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mirrormaker
+  namespace: managed-b
+  labels:
+    app: mirrormaker
+spec:
+  selector:
+    matchLabels:
+      app: mirrormaker
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: mirrormaker
+    spec:
+      containers:
+        - name: mirrormaker
+          image: bitnami/kafka:3.5
+          command:
+            - /opt/bitnami/kafka/bin/connect-mirror-maker.sh
+            - /etc/mm2/mm2.properties
+            - --clusters
+            - managed-b
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 750m
+              memory: 768Mi
+          volumeMounts:
+            - name: mm2-config
+              mountPath: /etc/mm2
+              readOnly: true
+      volumes:
+        - name: mm2-config
+          configMap:
+            name: mm2-config
+      restartPolicy: Always
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: mm2-config
+  namespace: managed-b
+data:
+  mm2.properties: |
+    clusters = managed-a, managed-b
+
+    # Bootstrap servers
+    managed-a.bootstrap.servers = kafka-0.managed-a.svc.cluster.local:9092,kafka-1.managed-a.svc.cluster.local:9092,kafka-2.managed-a.svc.cluster.local:9092
+    managed-b.bootstrap.servers = kafka-0.managed-b.svc.cluster.local:9092,kafka-1.managed-b.svc.cluster.local:9092,kafka-2.managed-b.svc.cluster.local:9092
+
+    # Replication config
+    managed-a->managed-b.enabled = true
+    managed-b->managed-a.enabled = true
+
+    refresh.topics.interval.seconds = 60
+    refresh.groups.interval.seconds = 60
+
+    sync.group.offsets.enabled = true
