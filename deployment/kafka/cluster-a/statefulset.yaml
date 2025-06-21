@@ -63,3 +63,16 @@ spec:
               value: "3"
             - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
               value: "true"
+          volumeMounts:
+            - name: kafka-data
+              mountPath: /bitnami/kafka
+  volumeClaimTemplates:
+    - metadata:
+        name: kafka-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: microk8s-hostpath
