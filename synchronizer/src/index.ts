@@ -40,8 +40,8 @@ function createWebSocket() {
       }
       const chatId = message.chatId;
       const messagesToSend: {
-        id: number;
-        chatId: number;
+        id: string;
+        chatId: string;
         content: string;
         isDeleted?: boolean;
         createdAt?: string;
@@ -61,7 +61,7 @@ function createWebSocket() {
         topic: process.env.KAFKA_TOPIC!,
         messages: messagesToSend.map((m) => ({
           value: JSON.stringify(m),
-          key: m.chatId.toString(),
+          key: m.chatId,
         })),
       });
     } catch (err) {

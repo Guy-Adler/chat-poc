@@ -3,8 +3,8 @@ import { Chat } from './Chat.entity';
 
 @Entity()
 export class ChatMessage {
-  @PrimaryGeneratedColumn()
-  id!: number;
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
 
   @ManyToOne(() => Chat, (chat) => chat.messages, { onDelete: 'CASCADE' })
   chat!: Chat;

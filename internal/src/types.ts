@@ -3,8 +3,8 @@ type PartialField<T, K extends keyof T> = Omit<T, K> & { [P in K]?: T[P] };
 type Prettify<T> = { [K in keyof T]: T[K] } & {};
 
 export type KafkaMessage = {
-  id: number;
-  chatId: number;
+  id: string;
+  chatId: string;
   content: string;
   isDeleted?: boolean;
   createdAt?: string;

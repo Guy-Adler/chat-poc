@@ -4,13 +4,13 @@ import { RedisHashMessage } from './types';
 
 /**
  * Fetches chat messages from the database for a given chatId.
- * @param {number} chatId - The chat ID to fetch messages for.
+ * @param {string} chatId - The chat ID to fetch messages for.
  * @returns {Promise<any[]>} Array of chat messages from the DB.
  */
-async function getDbChatMessages(chatId: number): Promise<
+async function getDbChatMessages(chatId: string): Promise<
   {
-    id: number;
-    chatId: number;
+    id: string;
+    chatId: string;
     content: string;
     createdAt: string;
     replicationTimestamp: string;
@@ -31,10 +31,10 @@ async function getDbChatMessages(chatId: number): Promise<
 
 /**
  * Fetches chat messages from the Redis cache for a given chatId.
- * @param {number} chatId - The chat ID to fetch cached messages for.
+ * @param {string} chatId - The chat ID to fetch cached messages for.
  * @returns {Promise<RedisHashMessage[]>} Array of cached chat messages.
  */
-async function getCachedChatMessages(chatId: number): Promise<RedisHashMessage[]> {
+async function getCachedChatMessages(chatId: string): Promise<RedisHashMessage[]> {
   console.log(`[getCachedChatMessages] Fetching cached messages for chatId=${chatId}`);
   const ids = await pool.sMembers(getChatIndexKey(chatId));
   if (ids.length === 0) return [];
@@ -48,18 +48,18 @@ async function getCachedChatMessages(chatId: number): Promise<RedisHashMessage[]
 
 /**
  * Merges chat messages from the database and cache, preferring newer cache entries.
- * @param {number} chatId - The chat ID to fetch and merge messages for.
+ * @param {string} chatId - The chat ID to fetch and merge messages for.
  * @returns {Promise<RedisHashMessage[]>} Array of merged chat messages.
  */
-export async function getChatMessages(chatId: number): Promise<RedisHashMessage[]> {
+export async function getChatMessages(chatId: string): Promise<RedisHashMessage[]> {
   console.log(`[getChatMessages] Merging DB and cache messages for chatId=${chatId}`);
   const [dbChatMessages, redisChatMessages] = await Promise.all([
     getDbChatMessages(chatId),
     getCachedChatMessages(chatId),
   ]);
 
-  // Create a Map keyed by `${id}`
-  const mergedMap = new Map<number, RedisHashMessage>();
+  // Create a Map keyed by id
+  const mergedMap = new Map<string, RedisHashMessage>();
 
   // Insert DB messages first
   for (const msg of dbChatMessages) {

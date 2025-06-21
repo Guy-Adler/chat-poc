@@ -15,7 +15,7 @@ const UPDATE_BY_TIMESTAMP_SCRIPT = readFileSync(
  */
 export async function updateMessageInCache(message: MinimumKafkaMessage) {
   const args = [
-    message.id.toString(), // Message ID
+    message.id, // Message ID
     message.updatedAt ?? '', // Update timestamp
     Object.keys(message).length.toString(), // Length of json
   ];

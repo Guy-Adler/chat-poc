@@ -10,7 +10,7 @@ type ListenerType = 'create' | 'delete';
  * Manages all WebSocket rooms for chats.
  */
 export class RoomsManager {
-  private static readonly rooms = new Map<number, WsRoom>();
+  private static readonly rooms = new Map<string, WsRoom>();
   private static readonly createListeners = new Map<string, ListenerCallback>();
   private static readonly deleteListeners = new Map<string, ListenerCallback>();
 
@@ -18,10 +18,10 @@ export class RoomsManager {
 
   /**
    * Creates a new room for a chat.
-   * @param {number} id - The chat ID.
+   * @param {string} id - The chat ID.
    * @returns {WsRoom} The created room.
    */
-  static create(id: number): WsRoom {
+  static create(id: string): WsRoom {
     if (this.rooms.has(id)) {
       throw new Error(`id=${id} already exists`);
     }
@@ -34,9 +34,9 @@ export class RoomsManager {
 
   /**
    * Deletes a room for a chat.
-   * @param {number} id - The chat ID.
+   * @param {string} id - The chat ID.
    */
-  static delete(id: number): void {
+  static delete(id: string): void {
     if (!this.rooms.has(id)) {
       throw new Error(`id=${id} does not exists`);
     }
@@ -51,10 +51,10 @@ export class RoomsManager {
 
   /**
    * Gets a room by chat ID.
-   * @param {number} id - The chat ID.
+   * @param {string} id - The chat ID.
    * @returns {WsRoom|undefined} The room, if found.
    */
-  static getByRoomId(id: number): WsRoom | undefined {
+  static getByRoomId(id: string): WsRoom | undefined {
     return this.rooms.get(id);
   }
 

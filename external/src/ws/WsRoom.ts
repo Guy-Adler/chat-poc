@@ -12,9 +12,9 @@ export class WsRoom {
 
   /**
    * Creates a new WsRoom and broadcasts its creation.
-   * @param {number} id - The chat ID for this room.
+   * @param {string} id - The chat ID for this room.
    */
-  constructor(private readonly id: number) {
+  constructor(private readonly id: string) {
     console.log(`[WsRoom] Created room for chatId=${id}`);
     ClientsManager.broadcast(JSON.stringify({ type: 'newChat', chatId: id }));
   }

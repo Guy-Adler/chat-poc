@@ -40,9 +40,9 @@ io.on('connection', (socket) => {
 });
 
 export function sendUpdate(
-  chatId: number,
+  chatId: string,
   update: {
-    id: number;
+    id: string;
     content: string;
     isDeleted?: boolean;
     createdAt?: string;

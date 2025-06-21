@@ -16,9 +16,9 @@ export class WsClient {
 
   /**
    * Subscribes the client to a room or all rooms.
-   * @param {number} [id] - Room ID to subscribe to, or all if undefined.
+   * @param {string} [id] - Room ID to subscribe to, or all if undefined.
    */
-  subscribe(id?: number) {
+  subscribe(id?: string) {
     if (id !== undefined) {
       RoomsManager.getByRoomId(id)?.subscribe(this);
       console.log(`[WsClient] Client ${this.id} subscribed to room ${id}`);
@@ -35,9 +35,9 @@ export class WsClient {
 
   /**
    * Unsubscribes the client from a room.
-   * @param {number} id - Room ID to unsubscribe from.
+   * @param {string} id - Room ID to unsubscribe from.
    */
-  unsubscribe(id: number) {
+  unsubscribe(id: string) {
     RoomsManager.getByRoomId(id)?.unsubscribe(this);
     console.log(`[WsClient] Client ${this.id} unsubscribed from room ${id}`);
   }

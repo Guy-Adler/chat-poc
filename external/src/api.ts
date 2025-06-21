@@ -53,10 +53,10 @@ app.post('/chats', async (req, res) => {
  * Adds a new message to a chat.
  */
 app.post('/chat/:id', async (req, res) => {
-  const chatId = Number.parseInt(req.params.id);
+  const chatId = req.params.id;
   const { content } = req.body;
 
-  if (!Number.isInteger(chatId) || typeof content !== 'string') {
+  if (!chatId || typeof content !== 'string') {
     console.warn(`[api] Invalid chatId or content for POST /chat/:id`);
     res.status(400).send();
     return;
@@ -101,11 +101,11 @@ app.post('/chat/:id', async (req, res) => {
  * Updates the content of a message in a chat.
  */
 app.put('/chat/:chatId/message/:messageId', async (req, res) => {
-  const chatId = Number.parseInt(req.params.chatId);
-  const messageId = Number.parseInt(req.params.messageId);
+  const chatId = req.params.chatId;
+  const messageId = req.params.messageId;
   const { content } = req.body;
 
-  if (!Number.isInteger(chatId) || !Number.isInteger(messageId) || typeof content !== 'string') {
+  if (!chatId || !messageId || typeof content !== 'string') {
     console.warn(
       `[api] Invalid chatId, messageId, or content for PUT /chat/:chatId/message/:messageId`
     );
@@ -156,7 +156,7 @@ app.put('/chat/:chatId/message/:messageId', async (req, res) => {
  * Deletes a chat by ID.
  */
 app.delete('/chat/:id', async (req, res) => {
-  const chatId = Number.parseInt(req.params.id);
+  const chatId = req.params.id;
   try {
     const chat = await dataSource.getRepository(Chat).findOneByOrFail({ id: chatId });
     await dataSource.getRepository(Chat).remove(chat);

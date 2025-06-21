@@ -3,8 +3,8 @@ import { ChatMessage } from './ChatMessage.entity';
 
 @Entity()
 export class Chat {
-  @PrimaryGeneratedColumn()
-  id!: number;
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
 
   @OneToMany(() => ChatMessage, (message) => message.chat)
   messages!: ChatMessage[];
