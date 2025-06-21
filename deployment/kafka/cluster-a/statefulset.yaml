@@ -23,6 +23,13 @@ spec:
             - containerPort: 9092
             - containerPort: 9093
             - containerPort: 9094
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 750m
+              memory: 768Mi
           env:
             - name: POD_NAME
               valueFrom:
