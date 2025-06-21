@@ -17,8 +17,6 @@ spec:
       containers:
         - name: kafka
           image: bitnami/kafka:3.5
-          securityContext:
-            runAsUser: 0
           ports:
             - containerPort: 9092
             - containerPort: 9093
