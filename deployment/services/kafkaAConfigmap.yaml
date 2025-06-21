@@ -6,3 +6,4 @@ metadata:
 data:
   KAFKA_BROKERS: kafka-0.managed-a.svc.cluster.local:9092,kafka-1.managed-a.svc.cluster.local:9092,kafka-2.managed-a.svc.cluster.local:9092
   KAFKA_TOPIC: chat-messages
+  KAFKA_CHAT_TOPIC: chats
