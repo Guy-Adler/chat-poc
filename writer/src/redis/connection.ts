@@ -9,10 +9,10 @@ export const pool = createClientPool({
   password: process.env.REDIS_PASSWORD,
 });
 
-export function getKeyByMessage(id: string | number, chatId: string | number) {
+export function getKeyByMessage(id: string, chatId: string) {
   return `chat-messages:${chatId}:${id}`;
 }
 
-export function getChatIndexKey(chatId: string | number) {
+export function getChatIndexKey(chatId: string) {
   return `chat-index:${chatId}`;
 }
