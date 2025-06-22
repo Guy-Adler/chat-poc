@@ -46,7 +46,7 @@ export async function saveMessage(message: KafkaMessage) {
           updatedAt: message.updatedAt,
           replicationTimestamp: new Date(),
         })
-        .where('id = :id AND updatedAt < :updatedAt', {
+        .where('id = :id AND (updatedAt IS NULL OR updatedAt < :updatedAt)', {
           id: message.id,
           updatedAt: new Date(message.updatedAt),
         })
