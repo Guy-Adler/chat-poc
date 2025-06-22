@@ -32,6 +32,8 @@ spec:
               memory: 300Mi
           envFrom:
             - configMapRef:
+                name: redis-connection
+            - configMapRef:
                 name: kafka-a-connection
           env:
             - name: WS_HOST
@@ -40,4 +42,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            - name: ELECTION_LOCK_KEY
+              value: lock:synchronizer-election
+            - name: ELECTION_TTL
+              value: "10000"
       restartPolicy: Always

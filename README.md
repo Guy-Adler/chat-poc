@@ -69,3 +69,12 @@ $ microk8s kubectl apply -Rf ./deployment/
 ### Problem: client might get update messages before the load message
 
 **Solution**: Out of scope for this POC. Can be handled by saving the `update` messages in the client and only rendring them after the `load` message is received and processed.
+
+### Problem: whenever a new synchronizer starts, Kafka is bombed with messages.
+
+**Solution**: Leader elections to only send from 1 synchronizer.
+
+> [!TIP]
+> We can (and probably should) also make sure we aren't sending messages which were already sent. To do this, we can
+> assume updatedAt is _only increasing_, and then when starting read the
+> last message produced, and only produce messages which came after it (maybe with a grace period of -10 minutes).

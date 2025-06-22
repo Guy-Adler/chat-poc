@@ -1,6 +1,21 @@
 import 'dotenv/config';
 import { Kafka } from 'kafkajs';
 import { WebSocket } from 'ws';
+import { RedisLeaderElector } from './elections/RedisLeaderElector';
+
+const leaderElector = RedisLeaderElector.getInstance();
+
+leaderElector.on('gained', () => {
+  console.log('🔒✅ Gained lock');
+});
+
+leaderElector.on('extended', () => {
+  console.log('🔒🔄 Extended lock');
+});
+
+leaderElector.on('lost', () => {
+  console.log('🔒❌ Lost lock');
+});
 
 const kafka = new Kafka({
   brokers: (process.env.KAFKA_BROKERS ?? '').split(','),
@@ -9,6 +24,10 @@ const kafka = new Kafka({
 const producer = kafka.producer();
 
 async function handleChat(message: any) {
+  if (!leaderElector.isLeader) {
+    console.log('[chat synchronizer] Not leader, skipping sending messags');
+    return;
+  }
   const { chatId } = message;
 
   await producer.send({
@@ -61,31 +80,29 @@ function createWebSocket() {
         return;
       }
       const chatId = message.chatId;
-      const messagesToSend: {
-        id: string;
-        chatId: string;
-        content: string;
-        isDeleted?: boolean;
-        createdAt?: string;
-        updatedAt: string | null;
-      }[] = (message.messages as any[]).map((m: any) => ({
-        id: m.id,
-        createdAt: m.createdAt,
-        content: m.content,
-        updatedAt: m.updatedAt,
-        chatId,
-        isDeleted: false,
+      const messagesToSend = (message.messages as any[]).map((m: any) => ({
+        key: chatId,
+        value: JSON.stringify({
+          id: m.id,
+          createdAt: m.createdAt,
+          content: m.content,
+          updatedAt: m.updatedAt,
+          chatId,
+          isDeleted: false,
+        }),
       }));
-      console.log(
-        `[synchronizer] Forwarding ${messagesToSend.length} messages for chatId=${chatId} to Kafka`
-      );
-      await producer.send({
-        topic: process.env.KAFKA_TOPIC!,
-        messages: messagesToSend.map((m) => ({
-          value: JSON.stringify(m),
-          key: m.chatId,
-        })),
-      });
+
+      if (leaderElector.isLeader) {
+        console.log(
+          `[synchronizer] Forwarding ${messagesToSend.length} messages for chatId=${chatId} to Kafka`
+        );
+        await producer.send({
+          topic: process.env.KAFKA_TOPIC!,
+          messages: messagesToSend,
+        });
+      } else {
+        console.log('[synchronizer] Not leader, skipping sending messags');
+      }
     } catch (err) {
       console.error('[synchronizer] Error handling websocket message:', err);
     }
@@ -105,6 +122,7 @@ process.on('SIGTERM', async () => {
     });
     console.log('[synchronizer] Websocket connection closed.');
   }
+  await leaderElector.stop();
   // Stop Kafka producer
   await producer.disconnect();
   console.log('[synchronizer] Shutdown complete');
@@ -116,6 +134,7 @@ process.on('SIGTERM', async () => {
  * Connects the Kafka producer and establishes the websocket connection.
  */
 async function main() {
+  leaderElector.start();
   await producer.connect();
   websocket = createWebSocket();
   console.log('[synchronizer] Waiting for messages from Kafka');
