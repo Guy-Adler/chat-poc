@@ -38,3 +38,29 @@ $ microk8s kubectl apply -Rf ./deployment/
 - The external app should be available on [`http://localhost:30001`](http://localhost:30001)
 - The internal app should be available on [`http://localhost:30002`](http://localhost:30002)
 - KafkaUI should be available on [`http://localhost:30080`](http://localhost:30080)
+
+## Encountered problems & their solutions:
+
+### Problem: messages might never be deleted from redis.
+
+**Solution**: Add a 24 hours (86400 seconds) TTL to messages & chat indexes
+
+### Problem: not deleting only the latest version from redis
+
+**Solution**: Add a `deletedByTimestamp` lua script that only deletes from cache if the timestamp is >= current timestamp in cache.
+
+### Problem: sending update to client regardless of whether the message really has been updated
+
+**Solution**: Modify the `updateByTimestamp` lua script to return `-1` if the key wasn't found, `0` if there is a newer value in Redis, and `1` if there was an update.
+
+### Problem: need to use persistent groups for reading messages (just using Date makes us read old messages and send wong data to client)
+
+**Solution**: Move `internal` from a `Deployment` to a `StatefulSet`, guaranteeing a known set of unique pod names.
+
+### Problem: internal can send kafka message when there is a newer one already in db
+
+**Solution**: ?????
+
+### Problem: client might get update before load. (can handle by having clients cache locally)
+
+**Solution**: ?????
