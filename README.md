@@ -61,6 +61,6 @@ $ microk8s kubectl apply -Rf ./deployment/
 
 **Solution**: ?????
 
-### Problem: client might get update before load. (can handle by having clients cache locally)
+### Problem: client might get update messages before the load message
 
-**Solution**: ?????
+**Solution**: Out of scope for this POC. Can be handled by saving the `update` messages in the client and only rendring them after the `load` message is received and processed.
