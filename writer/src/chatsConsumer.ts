@@ -4,10 +4,10 @@ import { saveChat } from './saveChat';
 
 const kafka = new Kafka({
   brokers: (process.env.KAFKA_BROKERS ?? '').split(','),
-  clientId: 'chats-writer-1',
+  clientId: process.env.KAFKA_CLIENT_ID!,
 });
 const consumer = kafka.consumer({
-  groupId: `chats-writer`,
+  groupId: process.env.KAFKA_CHATS_GROUP_ID!,
 });
 
 export async function startChatsKafka() {

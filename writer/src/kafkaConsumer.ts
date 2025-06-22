@@ -4,10 +4,10 @@ import { saveMessage } from './saveMessage';
 
 const kafka = new Kafka({
   brokers: (process.env.KAFKA_BROKERS ?? '').split(','),
-  clientId: 'writer-1',
+  clientId: process.env.KAFKA_CLIENT_ID!,
 });
 const consumer = kafka.consumer({
-  groupId: `writer-${Date.now()}`,
+  groupId: process.env.KAFKA_GROUP_ID!,
 });
 
 export async function startKafka() {

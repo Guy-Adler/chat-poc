@@ -1,20 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: internal-app-headless
+  namespace: default
+spec:
+  selector:
+    app: internal
+  type: ClusterIP
+  clusterIP: None
+---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: internal-app
   namespace: default
-  labels:
-    app: internal-app
 spec:
   selector:
     matchLabels:
       app: internal-app
+  serviceName: internal-app-headless
   replicas: 1
-  strategy:
-    rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
-    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -40,6 +45,14 @@ spec:
           env:
             - name: PORT
               value: "3000"
+            - name: KAFKA_CLIENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: KAFKA_GROUP_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name # Each instance needs to consume all messages
           ports:
             - containerPort: 3000
               name: external

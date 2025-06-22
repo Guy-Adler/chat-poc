@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import type { KafkaMessage, MinimumKafkaMessage, RedisHashMessage } from '../types';
+import type { MinimumKafkaMessage, RedisHashMessage } from '../types';
 import { getChatIndexKey, getKeyByMessage, pool } from './connection';
 import { join } from 'path';
 

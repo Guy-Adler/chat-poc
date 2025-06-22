@@ -5,10 +5,10 @@ import { updateMessageInCache } from './redis/updateCache';
 
 const kafka = new Kafka({
   brokers: (process.env.KAFKA_BROKERS ?? '').split(','),
-  clientId: 'internal-1',
+  clientId: process.env.KAFKA_CLIENT_ID!,
 });
 const consumer = kafka.consumer({
-  groupId: `internal-${Date.now()}`,
+  groupId: process.env.KAFKA_GROUP_ID!,
 });
 
 export async function startKafka() {
