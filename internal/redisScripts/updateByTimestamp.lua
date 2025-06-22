@@ -21,9 +21,11 @@ if (not currentTimestamp) or (newTimestamp > currentTimestamp) then
     local value = ARGV[3 + (i * 2)]
     redis.call('HSET', hashKey, field, value)
   end
+  redis.call('EXPIRE', hashKey, 86400) -- expire message after 24h
   updated = 1
 end
 
 redis.call('SADD', indexKey, messageId)
+redis.call('EXPIRE', indexKey, 86400) -- refresh index to expire with latest message (this means the index can have invalid keys.)
 
 return updated

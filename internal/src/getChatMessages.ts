@@ -43,7 +43,10 @@ async function getCachedChatMessages(chatId: string): Promise<RedisHashMessage[]
 
   const pipeline = pool.multi();
   keys.forEach((key) => pipeline.hGetAll(key));
-  return (await pipeline.exec<'typed'>()) as RedisHashMessage[];
+
+  const result = (await pipeline.exec<'typed'>()) as RedisHashMessage[];
+  // Because the index might included expired messages, filter them out
+  return result.filter((msg) => Object.keys(msg).length > 0) as RedisHashMessage[];
 }
 
 /**
