@@ -31,7 +31,7 @@ export class WsRoom {
       .findOne({ relations: { messages: true }, where: { id: this.id } })
       .then((chat) => {
         if (chat) {
-          this.send(JSON.stringify({ type: 'load', chatId: this.id, messages: chat.messages }));
+          client.send(JSON.stringify({ type: 'load', chatId: this.id, messages: chat.messages }));
         }
       });
   }
