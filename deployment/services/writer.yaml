@@ -52,4 +52,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.labels['app']
+            - name: KAFKA_CHATS_GROUP_ID
+              value: chats-$(KAFKA_GROUP_ID)
       restartPolicy: Always
