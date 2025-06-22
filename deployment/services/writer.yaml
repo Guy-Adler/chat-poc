@@ -19,7 +19,7 @@ spec:
     matchLabels:
       app: writer
   serviceName: writer-headless
-  replicas: 1
+  replicas: 3
   template:
     metadata:
       labels:

@@ -4,7 +4,7 @@ import { WebSocket } from 'ws';
 
 const kafka = new Kafka({
   brokers: (process.env.KAFKA_BROKERS ?? '').split(','),
-  clientId: 'synchronizer-1',
+  clientId: process.env.KAFKA_CLIENT_ID,
 });
 const producer = kafka.producer();
 

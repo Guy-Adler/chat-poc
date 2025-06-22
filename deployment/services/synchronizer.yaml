@@ -9,7 +9,7 @@ spec:
   selector:
     matchLabels:
       app: synchronizer
-  replicas: 1
+  replicas: 3
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -36,4 +36,8 @@ spec:
           env:
             - name: WS_HOST
               value: "ws://external-app:3000/ws"
+            - name: KAFKA_CLIENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
       restartPolicy: Always
