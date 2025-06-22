@@ -59,7 +59,12 @@ $ microk8s kubectl apply -Rf ./deployment/
 
 ### Problem: internal can send kafka message when there is a newer one already in db
 
-**Solution**: ?????
+**Solution**: Keep mesages in Redis until they naturally expire (24 hours after last update). Message throughput is expected to be relatively low and chats are expected to last less than 24 hours, so this is not a problem.
+
+> [!TIP]
+> It is also possible to handle this client side (since the messages in the DB will arrive eventually) by only updating the UI if the `updatedBy` of the received message is higher than the one already rendered.
+>
+> If we choose this option, it is recommended to return to deleting the messages from Redis, to keep it cleaner. Code is available in [writer/src/saveMessage.ts](writer/src/saveMessage.ts)
 
 ### Problem: client might get update messages before the load message
 

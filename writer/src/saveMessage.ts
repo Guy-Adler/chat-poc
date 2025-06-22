@@ -10,6 +10,39 @@ const DELETE_BY_TIMESTAMP_SCRIPT = readFileSync(
   'utf-8'
 );
 
+async function deleteFromCache(message: KafkaMessage) {
+  console.log(
+    `[saveMessage] Removing message id=${message.id} from cache for chatId=${message.chatId}`
+  );
+
+  const result = (await pool.eval(DELETE_BY_TIMESTAMP_SCRIPT, {
+    keys: [getKeyByMessage(message.id, message.chatId), getChatIndexKey(message.chatId)],
+    arguments: [message.id, 'updatedAt' in message && message.updatedAt ? message.updatedAt : ''],
+  })) as number;
+
+  switch (result) {
+    case -1:
+      console.log(
+        `[saveMessage] Could not find message id=${message.id}, chatId=${message.chatId} in cache. Skipping deletion.`
+      );
+      break;
+    case 0:
+      console.log(
+        `[saveMessage] A newer version of message id=${message.id}, chatId=${message.chatId} exists in cache. Skipping deleteion.`
+      );
+      break;
+    case 1:
+      console.log(
+        `[saveMessage] Successfully deleted message id=${message.id}, chatId=${message.chatId} from cache.`
+      );
+      break;
+    default:
+      console.warn(
+        `[saveMessage] WARN: Unknown result code ${result} when deleting message id=${message.id}, chatId=${message.chatId} from cache.`
+      );
+  }
+}
+
 /**
  * Saves a KafkaMessage to the database and updates the cache accordingly.
  * Handles insert, update, and delete operations based on message content.
@@ -62,37 +95,12 @@ export async function saveMessage(message: KafkaMessage) {
         .execute();
     }
 
-    // Remove from cache:
-    console.log(
-      `[saveMessage] Removing message id=${message.id} from cache for chatId=${message.chatId}`
-    );
-
-    const result = (await pool.eval(DELETE_BY_TIMESTAMP_SCRIPT, {
-      keys: [getKeyByMessage(message.id, message.chatId), getChatIndexKey(message.chatId)],
-      arguments: [message.id, 'updatedAt' in message && message.updatedAt ? message.updatedAt : ''],
-    })) as number;
-
-    switch (result) {
-      case -1:
-        console.log(
-          `[saveMessage] Could not find message id=${message.id}, chatId=${message.chatId} in cache. Skipping deletion.`
-        );
-        break;
-      case 0:
-        console.log(
-          `[saveMessage] A newer version of message id=${message.id}, chatId=${message.chatId} exists in cache. Skipping deleteion.`
-        );
-        break;
-      case 1:
-        console.log(
-          `[saveMessage] Successfully deleted message id=${message.id}, chatId=${message.chatId} from cache.`
-        );
-        break;
-      default:
-        console.warn(
-          `[saveMessage] WARN: Unknown result code ${result} when deleting message id=${message.id}, chatId=${message.chatId} from cache.`
-        );
-    }
+    /*
+     ? We want to keep the messages in the cache so if a client (`internal`) receives a message with a lower update time
+     ? than the one already in the database it will not send it to users. If you find a better way to solve this,
+     ? restore the `deleteFromCache` call to keep the cache cleaner :)
+     */
+    // await deleteFromCache(message);
   } catch (err) {
     console.error(
       `[saveMessage] Error processing message id=${message.id} chatId=${message.chatId}:`,
