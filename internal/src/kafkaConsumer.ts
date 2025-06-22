@@ -22,8 +22,14 @@ export async function startKafka() {
       try {
         const kafkaMessage: KafkaMessage = JSON.parse(message.value.toString());
 
-        await updateMessageInCache(kafkaMessage);
+        const updated = await updateMessageInCache(kafkaMessage);
 
+        if (!updated) {
+          console.log(
+            `Skipping sending update (id=${kafkaMessage.id}, chatId=${kafkaMessage.chatId}) because a newer version exists in cache.`
+          );
+          return;
+        }
         sendUpdate(kafkaMessage.chatId, kafkaMessage);
       } catch {
         console.error('Failed to handle message!');

@@ -11,9 +11,9 @@ const UPDATE_BY_TIMESTAMP_SCRIPT = readFileSync(
 /**
  * Updates a message in the Redis cache using a Lua script.
  * @param {MinimumKafkaMessage} message - The message to update in cache
- * @returns {Promise<RedisHashMessage>} The updated message from cache
+ * @returns {Promise<boolean>} Whether or not the cache has been updated.
  */
-export async function updateMessageInCache(message: MinimumKafkaMessage) {
+export async function updateMessageInCache(message: MinimumKafkaMessage): Promise<boolean> {
   const args = [
     message.id, // Message ID
     message.updatedAt ?? '', // Update timestamp
@@ -25,21 +25,22 @@ export async function updateMessageInCache(message: MinimumKafkaMessage) {
   }
 
   console.log(
-    `[internal/redis/updateCache] Updating cache for message id=${message.id} chatId=${message.chatId}`
+    `[internal/redis/updateCache] Trying to update cache for message id=${message.id} chatId=${message.chatId}`
   );
-  const rawResult = (await pool.eval(UPDATE_BY_TIMESTAMP_SCRIPT, {
+  const updated = (await pool.eval(UPDATE_BY_TIMESTAMP_SCRIPT, {
     keys: [getKeyByMessage(message.id, message.chatId), getChatIndexKey(message.chatId)],
     arguments: args,
-  })) as string[];
+  })) as number;
 
-  const result: Record<string, string> = {};
-  for (let i = 0; i < rawResult.length; i += 2) {
-    result[rawResult[i]] = rawResult[i + 1];
+  if (updated === 0) {
+    console.log(
+      `[internal/redis/updateCache] Didn't update cache for message id=${message.id} chatId=${message.chatId} because there is a newer version`
+    );
+  } else {
+    console.log(
+      `[internal/redis/updateCache] Updated cache for message id=${message.id} chatId=${message.chatId}`
+    );
   }
 
-  console.log(
-    `[internal/redis/updateCache] Cache update result for message id=${message.id}:`,
-    result
-  );
-  return result as unknown as RedisHashMessage;
+  return !!updated;
 }

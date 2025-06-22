@@ -14,14 +14,16 @@ local fieldCount = tonumber(ARGV[3])
 
 local currentTimestamp = redis.call('HGET', hashKey, "updatedAt")
 
+local updated = 0
 if (not currentTimestamp) or (newTimestamp > currentTimestamp) then
   for i = 1, fieldCount do
     local field = ARGV[3 + (i * 2 - 1)]
     local value = ARGV[3 + (i * 2)]
     redis.call('HSET', hashKey, field, value)
   end
+  updated = 1
 end
 
 redis.call('SADD', indexKey, messageId)
 
-return redis.call('HGETALL', hashKey)
+return updated
