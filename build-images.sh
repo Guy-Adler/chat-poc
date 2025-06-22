@@ -18,14 +18,17 @@ buildAndTag() {
   echo "Finished pushing $service"
 }
 
-
-services=()
-while IFS= read -r service; do
-  services+=("$service")
-done < <(find . -maxdepth 2 -name Dockerfile -type f -exec dirname {} \; | sed 's|^\./||')
+if [ "$#" -gt 0 ]; then
+  services=("$@")  
+else
+  services=()
+  while IFS= read -r service; do
+    services+=("$service")
+  done < <(find . -maxdepth 2 -name Dockerfile -type f -exec dirname {} \; | sed 's|^\./||')
+fi
 
 echo "Found the following services:"
-echo "$services"
+echo "${services[@]}"
 
 echo "Running build & push in parallel..."
 
