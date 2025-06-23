@@ -42,8 +42,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name: ELECTION_LOCK_KEY
-              value: lock:synchronizer-election
-            - name: ELECTION_TTL
-              value: "10000"
+            - name: MESSAGE_MAX_UPDATE_TIME_OFFSET_SECONDS
+              value: "60"
+            # - name: ELECTION_LOCK_KEY
+            #   value: lock:synchronizer-election
+            # - name: ELECTION_TTL
+            #   value: "30000"
       restartPolicy: Always

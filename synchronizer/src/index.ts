@@ -2,6 +2,12 @@ import 'dotenv/config';
 import { Kafka } from 'kafkajs';
 import { WebSocket } from 'ws';
 import { RedisLeaderElector } from './elections/RedisLeaderElector';
+import { LAST_UPDATE_TIME_KEY, pool, UPDATE_LAST_UPDATE_TIME_SCRIPT } from './redis/connection';
+
+/*
+For now, only deduplicate message consumer side. If we see that causes trouble, add the leader elections + a way to
+handle messages received during the gap between a leader going down and a new leader being elected gettings lost
+(since no instance is responsible for forwarding them to Kafka during that period).
 
 const leaderElector = RedisLeaderElector.getInstance();
 
@@ -16,6 +22,7 @@ leaderElector.on('extended', () => {
 leaderElector.on('lost', () => {
   console.log('🔒❌ Lost lock');
 });
+*/
 
 const kafka = new Kafka({
   brokers: (process.env.KAFKA_BROKERS ?? '').split(','),
@@ -24,10 +31,12 @@ const kafka = new Kafka({
 const producer = kafka.producer();
 
 async function handleChat(message: any) {
+  /*
   if (!leaderElector.isLeader) {
     console.log('[chat synchronizer] Not leader, skipping sending messags');
     return;
   }
+  */
   const { chatId } = message;
 
   await producer.send({
@@ -79,30 +88,65 @@ function createWebSocket() {
         console.log('[synchronizer] Received unknown message type', message.type);
         return;
       }
-      const chatId = message.chatId;
-      const messagesToSend = (message.messages as any[]).map((m: any) => ({
-        key: chatId,
-        value: JSON.stringify({
-          id: m.id,
-          createdAt: m.createdAt,
-          content: m.content,
-          updatedAt: m.updatedAt,
-          chatId,
-          isDeleted: false,
-        }),
-      }));
 
-      if (leaderElector.isLeader) {
-        console.log(
-          `[synchronizer] Forwarding ${messagesToSend.length} messages for chatId=${chatId} to Kafka`
-        );
-        await producer.send({
-          topic: process.env.KAFKA_TOPIC!,
-          messages: messagesToSend,
-        });
-      } else {
-        console.log('[synchronizer] Not leader, skipping sending messags');
-      }
+      const lastUpdateTime =
+        Number(await pool.get(LAST_UPDATE_TIME_KEY)) -
+        Number(process.env.MESSAGE_MAX_UPDATE_TIME_OFFSET_SECONDS ?? '') * 1000;
+
+      const chatId = message.chatId;
+
+      const { messagesToSend, maxUpdateTime } = (message.messages as any[]).reduce<{
+        messagesToSend: { key: string; value: string }[];
+        maxUpdateTime: number;
+      }>(
+        (acc, cur) => {
+          if (
+            Math.max(
+              new Date(cur.createdAt ?? null).getTime(),
+              new Date(cur.updatedAt ?? null).getTime()
+            ) < lastUpdateTime
+          )
+            return acc;
+
+          acc.messagesToSend.push({
+            key: chatId,
+            value: JSON.stringify({
+              id: cur.id,
+              createdAt: cur.createdAt,
+              content: cur.content,
+              updatedAt: cur.updatedAt,
+              chatId,
+              isDeleted: false,
+            }),
+          });
+
+          acc.maxUpdateTime = Math.max(
+            acc.maxUpdateTime,
+            new Date(cur.createdAt ?? null).getTime(),
+            new Date(cur.updatedAt ?? null).getTime()
+          );
+
+          return acc;
+        },
+        { messagesToSend: [], maxUpdateTime: lastUpdateTime }
+      );
+
+      // if (leaderElector.isLeader) {
+      console.log(
+        `[synchronizer] Forwarding ${messagesToSend.length} messages for chatId=${chatId} to Kafka`
+      );
+      await producer.send({
+        topic: process.env.KAFKA_TOPIC!,
+        messages: messagesToSend,
+      });
+
+      await pool.eval(UPDATE_LAST_UPDATE_TIME_SCRIPT, {
+        keys: [LAST_UPDATE_TIME_KEY],
+        arguments: [maxUpdateTime.toString()],
+      });
+      // } else {
+      //   console.log('[synchronizer] Not leader, skipping sending messags');
+      // }
     } catch (err) {
       console.error('[synchronizer] Error handling websocket message:', err);
     }
@@ -122,7 +166,7 @@ process.on('SIGTERM', async () => {
     });
     console.log('[synchronizer] Websocket connection closed.');
   }
-  await leaderElector.stop();
+  // await leaderElector.stop();
   // Stop Kafka producer
   await producer.disconnect();
   console.log('[synchronizer] Shutdown complete');
@@ -134,7 +178,7 @@ process.on('SIGTERM', async () => {
  * Connects the Kafka producer and establishes the websocket connection.
  */
 async function main() {
-  leaderElector.start();
+  // leaderElector.start();
   await producer.connect();
   websocket = createWebSocket();
   console.log('[synchronizer] Waiting for messages from Kafka');
